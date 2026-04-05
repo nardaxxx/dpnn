@@ -68,22 +68,16 @@ log = logging.getLogger("dpnn")
 
 
 def check_registration(ip: str) -> bool:
-    """
-    Verifica se il nodo e' registrato nella rubrica DPNN.
-    Quando lo smart contract sara' deployato, questa funzione
-    controllera' il contratto Ethereum.
-    Per ora logga un avviso se il contratto non e' configurato.
-    """
     if not DPNN_CONTRACT:
         log.warning("=" * 56)
         log.warning("DPNN Network License v1.0")
-        log.warning("Per partecipare alla rete registrati su:")
+        log.warning("Verifica on-chain NON ancora attiva (v1 prototype).")
+        log.warning("In questa versione la rete e' aperta per test.")
+        log.warning("Per partecipare alla rete ufficiale registrati su:")
         log.warning(" https://decentraland.org — cerca DPNN")
-        log.warning("La rubrica ufficiale e' su Ethereum.")
-        log.warning("Il codice e' libero. La rete ha una sola porta.")
+        log.warning("Il controllo Ethereum sara' attivo dalla v2.")
         log.warning("=" * 56)
-        return True  # permissivo finche' il contratto non esiste
-
+        return True
     # TODO: verifica contratto Ethereum
     # w3 = Web3(...)
     # contract = w3.eth.contract(address=DPNN_CONTRACT, abi=DPNN_ABI)
@@ -267,12 +261,11 @@ def fetch_all_peers() -> list[Peer]:
         futures = [ex.submit(fetch_from_url, url) for url in urls]
         for future in as_completed(futures):
             try:
-                result = future.result()
+                peers = future.result()
             except Exception as e:
                 log.warning("Errore fetch registry: %s", e)
                 continue
-
-            for peer in result:
+            for peer in peers:
                 k = (peer.ip, peer.port)
                 if k not in seen:
                     seen[k] = peer
@@ -281,7 +274,7 @@ def fetch_all_peers() -> list[Peer]:
     return list(seen.values())
 
 
-class GithubRegistry:
+class BootstrapRegistry:
     def __init__(self) -> None:
         self._etag: Optional[str] = None
         self._cache: list[Peer] = []
@@ -336,6 +329,7 @@ class GithubRegistry:
         encoded = base64.b64encode(
             json.dumps([asdict(p) for p in peers], indent=2).encode("utf-8")
         ).decode("utf-8")
+
         payload: dict[str, Any] = {
             "message": message,
             "content": encoded,
@@ -346,6 +340,7 @@ class GithubRegistry:
 
         headers = self._headers()
         headers["Content-Type"] = "application/json"
+
         req = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
@@ -362,7 +357,7 @@ class GithubRegistry:
             return False
 
 
-registry = GithubRegistry()
+registry = BootstrapRegistry()
 
 
 # ================= PEER MANAGEMENT =================
@@ -395,19 +390,21 @@ def merge_peers(new_peers: list[Peer]) -> None:
 def upsert_self(peers: list[Peer], my_ip: str, geo: dict[str, str]) -> list[Peer]:
     now = int(time.time())
     filtered = [p for p in peers if p.ip != my_ip]
-    filtered.append(Peer(
-        ip=my_ip,
-        port=NODE_PORT,
-        last_seen=now,
-        status="online",
-        country=geo.get("country", ""),
-        country_code=geo.get("country_code", ""),
-        region=geo.get("region", ""),
-        city=geo.get("city", ""),
-        org=geo.get("org", ""),
-        asn=geo.get("asn", ""),
-        source="self",
-    ))
+    filtered.append(
+        Peer(
+            ip=my_ip,
+            port=NODE_PORT,
+            last_seen=now,
+            status="online",
+            country=geo.get("country", ""),
+            country_code=geo.get("country_code", ""),
+            region=geo.get("region", ""),
+            city=geo.get("city", ""),
+            org=geo.get("org", ""),
+            asn=geo.get("asn", ""),
+            source="self",
+        )
+    )
     return filtered
 
 
@@ -497,8 +494,7 @@ def resolve_query(qname: str, qtype: str) -> tuple[list[str], int]:
     for peer in peers:
         result = resolve_via_peer(peer, qname, qtype)
         if result is not None:
-            log.info("Risolto %s [%s] via %s (%s)",
-                     qname, qtype, peer.ip, peer.country_code)
+            log.info("Risolto %s [%s] via %s (%s)", qname, qtype, peer.ip, peer.country_code)
             return result
 
     log.error("Tutti i peer di %s hanno fallito per %s", country, qname)
@@ -540,8 +536,7 @@ def handle_peer(conn: socket.socket, addr: tuple[str, int]) -> None:
 
         mtype = msg.get("type", "")
         if mtype == "HELLO":
-            incoming = [p for item in msg.get("peers", [])
-                        if (p := Peer.from_dict(item))]
+            incoming = [p for item in msg.get("peers", []) if (p := Peer.from_dict(item))]
             merge_peers(incoming)
             with state_lock:
                 wire = [asdict(p) for p in known_peers]
@@ -552,11 +547,12 @@ def handle_peer(conn: socket.socket, addr: tuple[str, int]) -> None:
         elif mtype == "DNS_QUERY":
             domain = str(msg.get("domain", "")).strip()
             qtype = str(msg.get("qtype", "A")).upper()
+
             if not domain:
                 send_line(conn, {
                     "type": "DNS_RESPONSE",
                     "ok": False,
-                    "error": "MISSING_DOMAIN"
+                    "error": "MISSING_DOMAIN",
                 })
                 return
 
@@ -594,9 +590,7 @@ def start_node_server() -> None:
         while running:
             try:
                 conn, addr = server.accept()
-                threading.Thread(
-                    target=handle_peer, args=(conn, addr), daemon=True
-                ).start()
+                threading.Thread(target=handle_peer, args=(conn, addr), daemon=True).start()
             except socket.timeout:
                 continue
             except Exception as e:
@@ -617,8 +611,7 @@ class DoHHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/status":
-            self._send(200, self._status().encode("utf-8"),
-                       "text/plain; charset=utf-8")
+            self._send(200, self._status().encode("utf-8"), "text/plain; charset=utf-8")
             return
 
         if not self.path.startswith("/dns-query"):
@@ -628,6 +621,7 @@ class DoHHandler(BaseHTTPRequestHandler):
         params = parse_qs(urlparse(self.path).query)
         name = params.get("name", [""])[0].strip().rstrip(".")
         qtype = params.get("type", ["A"])[0].strip().upper()
+
         if not name:
             self._send(400, b"Missing name", "text/plain")
             return
@@ -680,18 +674,23 @@ class DoHHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _json_resp(
-        self, name: str, qtype: str, answers: list[str], ttl: int
-    ) -> str:
+    def _json_resp(self, name: str, qtype: str, answers: list[str], ttl: int) -> str:
         qt = {
-            "A": 1, "AAAA": 28, "MX": 15,
-            "TXT": 16, "CNAME": 5, "NS": 2
+            "A": 1,
+            "AAAA": 28,
+            "MX": 15,
+            "TXT": 16,
+            "CNAME": 5,
+            "NS": 2,
         }.get(qtype, 1)
 
         return json.dumps({
             "Status": 0 if answers else 2,
-            "TC": False, "RD": True, "RA": True,
-            "AD": False, "CD": False,
+            "TC": False,
+            "RD": True,
+            "RA": True,
+            "AD": False,
+            "CD": False,
             "Question": [{"name": name, "type": qt}],
             "Answer": [
                 {"name": name, "type": qt, "TTL": ttl, "data": a}
@@ -746,7 +745,6 @@ def keepalive_loop(my_ip: str, geo: dict[str, str]) -> None:
         peers = upsert_self(peers, my_ip, geo)
         merge_peers(peers)
         registry.write(peers, sha, f"keepalive {my_ip}")
-        cleanup_connected_peers()
         log.info("Keepalive — %d peer nel registry", len(peers))
 
 
@@ -759,14 +757,17 @@ def discovery_loop() -> None:
         cleanup_connected_peers()
 
         with state_lock:
-            targets = [p for p in known_peers
-                       if p.ip not in connected_peers and p.ip != _my_ip]
+            targets = [
+                p for p in known_peers
+                if p.ip not in connected_peers and p.ip != _my_ip
+            ]
 
         for peer in targets[:5]:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(CONNECT_TIMEOUT)
                 sock.connect((peer.ip, peer.port))
+
                 with state_lock:
                     wire = [asdict(p) for p in known_peers]
 
@@ -780,8 +781,7 @@ def discovery_loop() -> None:
                 sock.close()
 
                 if resp and resp.get("type") == "PEER_LIST":
-                    incoming = [p for item in resp.get("peers", [])
-                                if (p := Peer.from_dict(item))]
+                    incoming = [p for item in resp.get("peers", []) if (p := Peer.from_dict(item))]
                     merge_peers(incoming)
                     with state_lock:
                         connected_peers[peer.ip] = int(time.time())
@@ -835,12 +835,11 @@ def cmd_run(country: str) -> int:
     global running, _my_ip, _my_country
 
     if not get_registry_urls():
-        log.error("Imposta DPNN_REGISTRY_URLS o DPNN_REPO_OWNER per il bootstrap dei peer")
+        log.error("Imposta DPNN_REGISTRY_URLS per il bootstrap dei peer")
         return 1
 
     signal.signal(signal.SIGINT, signal_handler)
-    if hasattr(signal, "SIGTERM"):
-        signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     log.info("Rilevo IP pubblico...")
     my_ip = get_public_ip()
@@ -859,8 +858,7 @@ def cmd_run(country: str) -> int:
     log.info("Rilevo posizione geografica...")
     geo = get_geo(my_ip)
     if geo:
-        log.info("Posizione: %s, %s — %s",
-                 geo.get("city"), geo.get("country"), geo.get("org"))
+        log.info("Posizione: %s, %s — %s", geo.get("city"), geo.get("country"), geo.get("org"))
     else:
         log.warning("Geo non disponibile")
 
@@ -871,21 +869,17 @@ def cmd_run(country: str) -> int:
     _my_country = country.upper()
 
     with state_lock:
-        available = [p for p in known_peers
-                     if p.country_code == _my_country and p.ip != my_ip]
+        available = [p for p in known_peers if p.country_code == _my_country and p.ip != my_ip]
 
     if not available:
         with state_lock:
-            all_c = sorted(set(
-                p.country_code for p in known_peers if p.country_code
-            ))
+            all_c = sorted(set(p.country_code for p in known_peers if p.country_code))
         log.error("Nessun peer per paese: %s", _my_country)
         if all_c:
             log.error("Paesi disponibili: %s", ", ".join(all_c))
         return 1
 
-    log.info("Paese: %s — %d human node disponibili",
-             _my_country, len(available))
+    log.info("Paese: %s — %d human node disponibili", _my_country, len(available))
 
     if GITHUB_TOKEN and github_registry_enabled():
         peers_reg, sha = registry.read()
@@ -907,17 +901,15 @@ def cmd_run(country: str) -> int:
     ]
 
     if GITHUB_TOKEN and github_registry_enabled():
-        threads.append(threading.Thread(
-            target=keepalive_loop, args=(my_ip, geo), daemon=True
-        ))
+        threads.append(
+            threading.Thread(target=keepalive_loop, args=(my_ip, geo), daemon=True)
+        )
 
     for t in threads:
         t.start()
 
     doh_server = ThreadedHTTPServer((DOH_HOST, DOH_PORT), DoHHandler)
-    threading.Thread(
-        target=doh_server.serve_forever, daemon=True
-    ).start()
+    threading.Thread(target=doh_server.serve_forever, daemon=True).start()
 
     log.info("=" * 58)
     log.info("DPNN v1.0 attivo")
