@@ -1,6 +1,6 @@
 DPNN Network License — v1.0
 
-Copyright (c) 2025 Giovanni Albanese (nardaxxx)
+Copyright (c) 2025 Giovanni Nardacci (nardaxxx)
 
 You are FREE to:
 - Use, copy, share, and distribute this software freely
