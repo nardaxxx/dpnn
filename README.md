@@ -1,103 +1,160 @@
-# dpnn
-Distribuited Pryvacy Node Network - P2P DNS Mesh
-## What is DPNN
+DPNN — Distributed Privacy Node Network
+DNS answers are no longer universal — they depend on who is asking and from where.
+DPNN lets you see the internet as it appears from other networks.
+The problem
+The same domain does not resolve the same way everywhere.
+What you see depends on where you are.
+Your country, your ISP, your network — CDN geolocation, filtering rules,
+split-horizon configurations — all shape the answer you receive.
+The same domain resolves differently, or not at all, depending on who is asking.
+DPNN is a response to that fragmentation.
+What DPNN does
+DPNN lets you query DNS through a human node in another network.
+That human node resolves using their own system DNS — exactly as they would for themselves.
+You receive the answer their network sees.
+Not a public resolver. Not a VPN. Not a proxy. Not centralized DoH.
+A network of human nodes lending their native DNS context to each other.
+Human node — a node run by a real person on a real network: home, mobile, or office.
+Not an automated server in a datacenter. Your connection becomes an authentic observation point.
+You choose the country. The human node resolves. You get their view.
+Use cases
+Compare DNS resolution across countries and ISPs
+Detect filtering or blocking applied by a specific network
+Observe CDN geolocation behavior from different vantage points
+Analyze split-horizon DNS differences
+Debug region-specific DNS issues
+How it works
+your browser
+     ↓  DNS query (DoH)
+DPNN Resolver  127.0.0.1:53535
+     ↓  DPNN protocol (TCP/JSON)
+human node in chosen country
+     ↓  system DNS query
+authoritative nameserver
+     ↑  answer
+human node
+     ↑  answer
+DPNN Resolver
+     ↑  DNS answer
+your browser
+Node (dpnn_node.py) — runs on any machine. Accepts DNS queries from peers
+and resolves them using the local system DNS. No special configuration needed.
+The network context of the machine is what makes the answer authentic.
+Resolver (dpnn_resolver.py) — runs locally. Listens on 127.0.0.1:53535
+as a DNS over HTTPS (DoH) endpoint. Set it as your browser DNS once — done.
+What makes DPNN different
+Feature
+DPNN
+Public DNS
+VPN
+Uses remote DNS context
+✔
+✖
+✔
+Uses real user networks
+✔
+✖
+✖
+Centralized
+✖
+✔
+✔
+No single point to block
+✔
+✖
+✖
+Quick start
+Install
+git clone https://github.com/YOUR_USER/dpnn.git
+cd dpnn
+pip3 install dnslib dnspython
+Python 3.9+. No other dependencies. No root required.
+Configure
+export DPNN_REGISTRY_URLS="https://raw.githubusercontent.com/YOUR_USER/dpnn-peers/main/peers.json"
+See available countries
+python3 dpnn_resolver.py --list
+Start the resolver
+python3 dpnn_resolver.py --country DE
+Set your browser DNS
+Chrome / Brave:
+Settings → Privacy → Security → Use secure DNS → Custom:
+http://127.0.0.1:53535/dns-query
+Firefox:
+Settings → Privacy → DNS over HTTPS → Custom:
+http://127.0.0.1:53535/dns-query
+Test immediately (without changing browser settings)
+curl 'http://127.0.0.1:53535/dns-query?name=example.com&type=A'
+Running a human node
+export GITHUB_TOKEN="your_token"
+export DPNN_REPO_OWNER="registry_github_user"
+export DPNN_REPO_NAME="dpnn-peers"
 
-DPNN is an open source project that creates a distributed peer-to-peer DNS network. Every user who installs the program becomes a DNS node. Nodes connect directly to each other, forming a decentralized infrastructure that grows autonomously with every new participant.
-
----
-
-## What it does today
-
-When a user installs DPNN on their PC, that device resolves DNS queries through the distributed node network instead of the default ISP or Google DNS resolver. This reduces DNS query latency and removes direct dependency on centralized resolvers at the device level.
-
-DPNN does not modify router configuration and does not bypass ISP-level DNS blocking. It operates at the individual device level.
-
----
-
-## Why it matters
-
-Most users never change their DNS configuration. DPNN requires zero configuration — install and run. The node starts automatically, joins the network, and begins operating immediately.
-
-The network grows with every installation. More nodes mean lower latency, higher resilience, and broader geographic distribution.
-
----
-
-## The real value: infrastructure
-
-DPNN is not an end product. It is infrastructure.
-
-The core innovation is building a functional P2P mesh network that works even behind CGNAT — the restrictive NAT used by most residential ISPs — using UDP hole punching and STUN protocol, the same technology behind BitTorrent and WebRTC.
-
-Once nodes can communicate through CGNAT, the same network can carry:
-
-- Distributed DNS resolution (Phase 1 — current)
-- Distributed VPN routing (Phase 2)
-- Any peer-to-peer communication layer (Phase 3)
-
----
-
-## Technical architecture
-
-**Node discovery**
-New nodes download an initial peer list from a public GitHub registry. Once connected, peer exchange is fully autonomous between nodes.
-
-**NAT traversal**
-UDP hole punching + STUN protocol. Nodes behind CGNAT establish direct connections without port forwarding or VPS.
-
-**DNS resolution**
-Each node acts as a local DNS resolver for the host device. Upstream resolvers are configurable — default: Quad9, OpenDNS. No Google DNS, no Cloudflare.
-
-**Self-healing**
-Inactive nodes are removed automatically via periodic heartbeat. The network repairs itself.
-
-**Technology stack**
-Python 3.12, dnslib, pystray, Pillow, PyInstaller, UDP raw socket, STUN, GitHub API
-
----
-
-## Current status
-
-- Distributed node architecture defined
-- Base node running on Linux
-- Local DNS server operational
-- System tray interface active
-- GitHub bootstrap registry live at github.com/nardaxxx/dpnn-peers
-- UDP hole punching: in development
-
----
-
-## Roadmap
-
-**3 months**
-- UDP hole punching and STUN implementation
-- Automatic peer exchange between nodes
-- Windows EXE release
-
-**6 months**
-- Public beta
-- 1,000 active nodes target
-- Website and documentation
-
-**12 months**
-- Stable v1.0
-- VPN routing layer on existing node infrastructure
-- 10,000 active nodes target
-
----
-
-## Intellectual property
-
-The combination of distributed DNS resolution over a CGNAT-traversing P2P mesh network is under evaluation for international patent filing.
-
----
-
-## Author
-
-Giovanni — network engineer, OpenWrt specialist, founder of Human Flag (humanflag.org), Swiss non-profit. Based in Ticino, Switzerland.
-
-Contact: via GitHub
-
----
-
-*DPNN — Build the network first. The rest follows.*
-```
+python3 dpnn_node.py run
+Your machine registers in the peer list with country, ASN, and org metadata.
+You resolve queries using your own system DNS — exactly as you do for yourself.
+Your network perspective becomes available to the network.
+Threat model
+DPNN does not guarantee:
+anonymity of the querier
+censorship resistance
+correctness of peer responses
+trustless operation
+A human node may return incorrect data, misrepresent its location,
+or operate on a filtered or modified network.
+DPNN is designed for observation and comparison, not blind trust.
+DPNN is not about correctness. It is about observation.
+Human nodes can see your queries. There is no built-in anonymization layer.
+DoH layer
+The local resolver implements RFC 8484 (DNS over HTTPS):
+Media type: application/dns-message
+Supports POST (default) and GET
+Preserves full DNS response structure
+Explicit error signaling — no silent fallback to external DNS
+Legal and research context
+DPNN queries publicly available DNS information through human nodes.
+It does not intercept traffic, bypass firewalls, or hide connections.
+This is the same model used by RIPE Atlas — a distributed network of
+volunteer probes measuring real DNS behavior from real networks worldwide,
+funded by European public institutions — and by CAIDA, used by academic
+and government researchers globally.
+Participation as a node is voluntary and explicit.
+Status
+DPNN v1.0 is released and functional.
+The node and resolver work. The protocol is defined. The network is open.
+Join as a user, run a human node, or contribute to the next stage.
+Roadmap
+Stage 1 — Now
+[x] Functional node and resolver
+[x] Peer exchange and metadata (country, ASN, org)
+[x] Local DoH resolver, no root required
+[x] Multi-source registry, parallel fetch
+Stage 2 — Short term
+[ ] Local peer cache — works even when all registries are unreachable
+[ ] --verify mode — cross-check across multiple peers, flag divergences
+[ ] Connection type classification: residential / mobile / VPS / unknown
+[ ] Windows build
+Stage 3 — Mid term
+[ ] Immutable peer registry anchored on a public blockchain
+[ ] Signed peer identities and metadata
+[ ] Multi-source bootstrap with no single point of control
+Stage 4 — Long term
+[ ] Node compensation — peers earn micropayments per query via smart contract
+[ ] Full decentralization: no GitHub, no central server, no owner
+[ ] The registry lives on-chain. The network runs itself.
+Philosophy
+DPNN does not try to fix DNS.
+It exposes what DNS has become.
+Contributing
+Open an issue or pull request.
+Running a human node is already a contribution — every new network perspective adds value.
+Areas of interest: networking, DNS internals, distributed systems,
+blockchain/smart contracts, security and trust models.
+License
+DPNN Network License — v1.0
+You are free to use, copy, share, and distribute this software.
+To participate in the DPNN network you must be registered in the official
+DPNN registry on Decentraland/Ethereum and pay the network fee.
+The only official registry is the DPNN smart contract deployed on Ethereum.
+No third party can collect fees on behalf of DPNN.
+The code is free. The network has one door. That door is on the blockchain.
+See LICENSE.
