@@ -1,0 +1,117 @@
+DPNN Network License — v1.0
+
+Copyright (c) 2025 Giovanni Nardacci
+
+---
+
+## 1. Overview
+
+This license governs the use of the DPNN software and participation in the DPNN network.
+
+The software is free.
+The network is governed.
+
+---
+
+## 2. Permissions
+
+You are free to:
+
+* use this software for any purpose
+* copy and distribute the software
+* modify and improve the code
+* run this software on any machine
+* contribute changes or derivatives
+
+No permission is required to use the code.
+
+---
+
+## 3. Separation between software and network
+
+This license distinguishes between:
+
+* the **software** (this code), which is free
+* the **DPNN network**, which is a coordinated system
+
+Using the software does not automatically grant participation in the official DPNN network.
+
+---
+
+## 4. Condition for network participation
+
+To participate in the official DPNN network, you must:
+
+* be registered in the official DPNN registry
+* complete registration through the official smart contract deployed on Ethereum
+* pay the required network fee
+
+Without registration, you may run the software but are not part of the official DPNN network.
+
+---
+
+## 5. Official registry
+
+The only official DPNN registry is the smart contract deployed on Ethereum.
+
+* no alternative registry is recognized as official
+* no centralized service defines the network
+* the contract is the single authoritative entry point
+
+Any system claiming to be DPNN outside of this registry is not part of the official DPNN network.
+
+---
+
+## 6. Payments
+
+* all participation fees must be paid directly to the official DPNN smart contract
+* no third party is authorized to collect fees on behalf of DPNN
+
+Any request for payment outside the official contract is invalid.
+
+---
+
+## 7. Protocol openness
+
+The DPNN protocol is open.
+
+* anyone may implement compatible software
+* anyone may study, extend, or adapt the protocol
+
+However, only nodes registered through the official registry are considered part of the DPNN network.
+
+---
+
+## 8. No warranty
+
+This software is provided "as is", without warranty of any kind.
+
+The author makes no guarantees regarding:
+
+* correctness
+* reliability
+* availability
+* security
+
+Use is at your own risk.
+
+---
+
+## 9. Limitation of liability
+
+In no event shall the author be liable for any damages arising from:
+
+* use of the software
+* participation in the network
+* network behavior or third-party nodes
+
+---
+
+## 10. Final statement
+
+The code is free.
+
+The network has one door.
+
+That door is on the blockchain.
+
