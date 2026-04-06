@@ -75,7 +75,6 @@ human node
 DPNN local
 ↑
 your browser
-
 ---
 
 ## Architecture
@@ -120,211 +119,105 @@ Not from servers.
 ---
 
 ## Installation
+
 ```bash
 git clone https://github.com/nardaxxx/dpnn.git
 cd dpnn
 pip3 install dnslib dnspython
-```
-
 Requirements:
-
-* Python 3.9 or newer
-* No root privileges required
-
----
-
-## Bootstrap configuration
-
-DPNN uses a temporary bootstrap registry for peer discovery.
-
+Python 3.9 or newer
+No root privileges required
+Bootstrap configuration
+DPNN uses a bootstrap registry for peer discovery.
 Set your registry directly:
-```bash
 export DPNN_REGISTRY_URLS="https://raw.githubusercontent.com/nardaxxx/dpnn-peers/main/peers.json"
-```
-
 Or set the GitHub repo variables:
-```bash
 export DPNN_REPO_OWNER="nardaxxx"
 export DPNN_REPO_NAME="dpnn-peers"
-```
-
 To register as a writable human node, also set:
-```bash
 export GITHUB_TOKEN="your_token_here"
-```
-
 Without a token, DPNN runs in read-only client mode.
-
----
-
-## List available countries
-```bash
+The bootstrap registry is temporary. The final network will use a decentralized on-chain registry.
+List available countries
 python3 dpnn.py --list
-```
-
----
-
-## Start DPNN
-```bash
+Start DPNN
 python3 dpnn.py --country DE
-```
-
----
-
-## Configure your browser
-
+Configure your browser
 Set DNS over HTTPS (DoH) to:
 http://127.0.0.1:53535/dns-query
-
----
-
-## Check status
-```bash
+Check status
 curl http://127.0.0.1:53535/status
-```
-
----
-
-## Test manually
-```bash
+Test manually
 curl "http://127.0.0.1:53535/dns-query?name=example.com&type=A"
-```
-
----
-
-## Current limitations (v1 prototype)
-
-* on-chain registration is not yet active — the network is open for testing
-* DNS responses are not verified across multiple peers
-* node identity is not signed
-* traffic between nodes is not encrypted
-
-These are known limitations of v1. See the roadmap.
-
----
-
-## Network model
-
+v1 limitations
+on-chain registration not yet active — the network is currently open
+DNS responses are not verified across multiple peers
+node identity is not signed
+traffic between nodes is not encrypted
+These will be addressed in v2.
+Network model
 DPNN currently uses a bootstrap registry for peer discovery.
-
 This registry:
-
-* is temporary
-* is not authoritative
-* is not part of the final network model
-
-Peers discovered through it are not verified.
-
----
-
-## Future model
-
+is temporary
+is not authoritative
+will be replaced by the on-chain registry
+Future model
 DPNN is designed to evolve into:
-
-* on-chain node registry (Ethereum)
-* signed node identities
-* fee-based participation
-* decentralized peer discovery
-
-The bootstrap registry will be removed.
-
----
-
-## Security and trust model
-
+on-chain node registry (Ethereum)
+signed node identities
+fee-based participation
+decentralized peer discovery
+Security and trust model
 DPNN is an observation network.
-
 It does NOT guarantee:
-
-* correctness of responses
-* anonymity of users
-* censorship resistance
-* verified node identity
-
+correctness of responses
+anonymity of users
+censorship resistance
+verified node identity
 A node may:
-
-* return incorrect data
-* operate on a filtered network
-* misrepresent its location
-
+return incorrect data
+operate on a filtered network
+misrepresent its location
 Human nodes can see your DNS queries.
-
----
-
-## DoH support
-
-* DNS over HTTPS (RFC 8484-style)
-* supports GET and POST
-* reconstructs DNS answers from remote nodes
-* does not fall back silently to external DNS
-
----
-
-## Status
-
-DPNN v1 is a functional experimental prototype.
-
-* peer discovery works
-* DNS queries across networks work
-* local DoH endpoint works
-
-The network is experimental and evolving.
-
----
-
-## Roadmap
-
-### Stage 1 — Current
-
-* [x] working protocol
-* [x] peer discovery
-* [x] human node participation
-* [x] local DoH resolver
-
-### Stage 2
-
-* [ ] local peer cache
-* [ ] multi-peer verification mode
-* [ ] node reliability scoring
-* [ ] improved DNS error handling
-
-### Stage 3
-
-* [ ] signed node identities
-* [ ] decentralized registry
-* [ ] removal of bootstrap dependency
-
-### Stage 4
-
-* [ ] on-chain registry
-* [ ] fee-based participation
-* [ ] fully self-sustaining network
-
----
-
-## Philosophy
-
+DoH support
+DNS over HTTPS (RFC 8484-style)
+supports GET and POST
+reconstructs DNS answers from remote nodes
+does not fall back silently to external DNS
+Status
+DPNN v1 is functional.
+peer discovery works
+DNS queries across networks work
+local DoH endpoint works
+Roadmap
+Stage 1 — Current
+[x] working protocol
+[x] peer discovery
+[x] human node participation
+[x] local DoH resolver
+Stage 2
+[ ] local peer cache
+[ ] multi-peer verification mode
+[ ] node reliability scoring
+[ ] improved DNS error handling
+Stage 3
+[ ] signed node identities
+[ ] decentralized registry
+[ ] removal of bootstrap dependency
+Stage 4
+[ ] on-chain registry
+[ ] fee-based participation
+[ ] fully self-sustaining network
+Philosophy
 DPNN does not try to fix DNS.
-
 It shows what DNS actually is.
-
----
-
-## Contributing
-
-* run DPNN on your network
-* test from different countries and ISPs
-* report issues
-* improve the protocol
-
+Contributing
+run DPNN on your network
+test from different countries and ISPs
+report issues
+improve the protocol
 Every new node increases the value of the network.
-
----
-
-## Final note
-
+Final note
 DPNN is built for observation, research, and resilience.
-
 In a fragmented or degraded internet, understanding how networks actually behave becomes critical.
-
 DPNN is designed for that.
